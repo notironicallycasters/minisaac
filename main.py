@@ -13,41 +13,39 @@ posY = 9*scale/2
 speedX = 0
 speedY = 0
 
-
+#Info projectiles
 projX = []
 projY = []
 projR = []
 projT = []
 pTimer= 0
 
+#Info ennemis
 foeX = []
 foeY = []
 foeT = []
 foeSpeed = 20
 
-rd = pi/180
-
-title = True
-
 #Stats
-speed = 25
-accel = 50
-pSpeed = 1
-pTick = 10
-hp = 6
-tearRange = 72
-inv = False
+speed = 25 #Vitesse joueur
+accel = 50 #Acceleration
+pSpeed = 1 #Vitesse projectiles
+pTick = 10 #Vitesse de tir
+pRange = 72 #Portée
+hp = 6 #Vie
+
+inv = False #Invinsibilité
 invTimer = 0
+rd = pi/180
+title = True
 
 wave = 1
 ennemis = 3
 
-
-
 pyxel.load("PYXEL_RESOURCE_FILE.pyxres")
-
 pyxel.playm(0,loop=True)
 
+#Mouvement avec accélération
 def move(x, y):
     global speedX,speedY,speed
 
@@ -63,7 +61,7 @@ def move(x, y):
              speedX = -speedX
         if speedX < -2:
             speedX = -2
-    else:
+    else: 
         if speedX > 0:
               speedX -= speed/60
         elif speedX < 0:
@@ -91,6 +89,7 @@ def move(x, y):
         if abs(speedY) < 2*speed/accel:
              speedY = 0
     
+    #Normalisation
     magnitude = (float(abs(speedX)>0) + float(abs(speedY)>0))**0.5
     magnitude += float(magnitude==0)
     if (x < 120) or (x > 0):
@@ -106,7 +105,6 @@ def projUpdate():
         return
     
     #Déplacement projectiles
-    delIndex = []
     for i in range(len(projX)):
         if i >= len(projX):
              return
@@ -115,17 +113,12 @@ def projUpdate():
         if abs(projR[i]) == 2:
             projY[i] += (projR[i]/2)*pSpeed
         projT[i] += 1
-        if projT[i] > tearRange or (abs(projY[0]) >= 9*scale or abs(projX[0]) >= 16*scale):
+        if projT[i] > pRange or (abs(projY[0]) >= 9*scale or abs(projX[0]) >= 16*scale):
             projX.pop(i)
             projY.pop(i)
             projR.pop(i)
             projT.pop(i)
-    for e in delIndex:
-        projX.pop(e)
-        projY.pop(e)
-        projR.pop(e)
-        projT.pop(e)
-
+    
 def foeUpdate():
     #Ignorer si 0 ennemis
     if foeX == []:
@@ -141,22 +134,18 @@ def foeUpdate():
 def collision():
     global hp,inv
     #Projectiles/Ennemis
-    delIndex = []
-    delIndex2 = []
     for i in range(len(foeX)):
         for j in range(len(projX)):
              if dist((foeX[i],foeY[i]),(projX[j],projY[j])) < 4:
-                  delIndex.append(i)
-                  delIndex2.append(j)
-    for e in delIndex:
-        foeX.pop(e)
-        foeY.pop(e)
-        foeT.pop(e)
-    for e in delIndex2:
-        projX.pop(e)
-        projY.pop(e)
-        projR.pop(e)
-        projT.pop(e)
+                projX.pop(j)
+                projY.pop(j)
+                projR.pop(j)
+                projT.pop(j)
+                foeX.pop(i)
+                foeY.pop(i)
+                foeT.pop(i)
+                return
+        
                 
     #Joueur/Ennemis:
     if inv:
@@ -235,7 +224,6 @@ def update():
             foeX.append(randint(0,16*scale))
             foeY.append(9*scale-(9*scale*randint(0,1)))
         foeT.append(randint(0,1))
-        print(foeX,foeY)
 
 
 def draw():
