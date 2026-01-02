@@ -40,7 +40,9 @@ rd = pi/180
 title = True
 
 wave = 1
-ennemis = 3
+prev = 3
+ennemis = 2
+wavescore = 0
 
 pyxel.load("PYXEL_RESOURCE_FILE.pyxres")
 pyxel.playm(0,loop=True)
@@ -131,8 +133,16 @@ def foeUpdate():
                 foeX[i] += (posX-foeX[i])*0.1*foeSpeed*invDist +(randint(-1,1)*foeT[i]==1)
                 foeY[i] += (posY-foeY[i])*0.1*foeSpeed*invDist +(randint(-1,1)*foeT[i]==1)
 
+def label(text:str,x,y):
+    font = 12
+    for i in range(len(text)):
+        o = ord(text[i])-32
+        u = o%16
+        v = o//16
+        pyxel.blt(x+i*font,y,1,font*u,font*v,font,font,9)
+
 def collision():
-    global hp,inv
+    global hp,inv,wave,wavescore,prev,ennemis
     #Projectiles/Ennemis
     for i in range(len(foeX)):
         for j in range(len(projX)):
@@ -144,6 +154,14 @@ def collision():
                 foeX.pop(i)
                 foeY.pop(i)
                 foeT.pop(i)
+                wavescore +=1
+                if wavescore == ennemis:
+                    t = ennemis
+                    ennemis = int(round((prev + ennemis)**0.9))
+                    prev = t
+                    pyxel.play(2,13)
+                    wave += 1
+                    wavescore = 0
                 return
         
                 
@@ -216,7 +234,7 @@ def update():
         
 
     #Apparition ennemis:
-    if randint(0,64) == 0:
+    if randint(0,64) == 0 and len(foeX) < ennemis:
         if randint(0,1) == 0:
             foeX.append(16*scale-(16*scale*randint(0,1)))
             foeY.append(randint(0,9*scale))
@@ -227,6 +245,7 @@ def update():
 
 
 def draw():
+
     #Écran titre
     if title:
         pyxel.cls(7)
@@ -238,6 +257,7 @@ def draw():
     #Fond marron
     pyxel.cls(9)
     pyxel.blt((16*scale/2)-64,(9*scale/2)-48,0,0,176,128,96,0)
+    
 
     #Joueur 16x16
     if invTimer % 2 == 0:
@@ -261,7 +281,8 @@ def draw():
         elif tempHp <= 0:
             pyxel.blt((16*scale/2)-144+(i*20),(9*scale/2)-80,0,48,0,16,16,9)
         tempHp -= 2
-        
+    label(f"Wave:{wave}",(16*scale/2)-144,(9*scale/2)-64)
+    label(f"Remain:{ennemis-wavescore}",(16*scale/2)-144,(9*scale/2)-48)
     
 
 pyxel.run(update, draw)
