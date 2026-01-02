@@ -116,12 +116,15 @@ def projUpdate():
             projY[i] += (projR[i]/2)*pSpeed
         projT[i] += 1
         if projT[i] > tearRange or (abs(projY[0]) >= 9*scale or abs(projX[0]) >= 16*scale):
-            delIndex.append(i)
-    for i in delIndex:
-        projX.pop(delIndex[i]-i)
-        projY.pop(delIndex[i]-i)
-        projR.pop(delIndex[i]-i)
-        projT.pop(delIndex[i]-i)
+            projX.pop(i)
+            projY.pop(i)
+            projR.pop(i)
+            projT.pop(i)
+    for e in delIndex:
+        projX.pop(e)
+        projY.pop(e)
+        projR.pop(e)
+        projT.pop(e)
 
 def foeUpdate():
     #Ignorer si 0 ennemis
@@ -145,15 +148,15 @@ def collision():
              if dist((foeX[i],foeY[i]),(projX[j],projY[j])) < 4:
                   delIndex.append(i)
                   delIndex2.append(j)
-    for i in delIndex:
-        foeX.pop(delIndex[i]-i)
-        foeY.pop(delIndex[i]-i)
-        foeT.pop(delIndex[i]-i)
-    for i in delIndex2:
-        projX.pop(delIndex2[i]-i)
-        projY.pop(delIndex2[i]-i)
-        projR.pop(delIndex2[i]-i)
-        projT.pop(delIndex2[i]-i)
+    for e in delIndex:
+        foeX.pop(e)
+        foeY.pop(e)
+        foeT.pop(e)
+    for e in delIndex2:
+        projX.pop(e)
+        projY.pop(e)
+        projR.pop(e)
+        projT.pop(e)
                 
     #Joueur/Ennemis:
     if inv:
@@ -232,6 +235,7 @@ def update():
             foeX.append(randint(0,16*scale))
             foeY.append(9*scale-(9*scale*randint(0,1)))
         foeT.append(randint(0,1))
+        print(foeX,foeY)
 
 
 def draw():
