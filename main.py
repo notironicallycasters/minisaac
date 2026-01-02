@@ -1,0 +1,275 @@
+import pyxel
+from math import *
+from random import randint,choice
+
+# Taille de la fenetre 128x128 pixels
+scale = 20
+pyxel.init(16*scale, 9*scale, title="MinIsaac",quit_key=pyxel.KEY_ESCAPE)
+pyxel.fullscreen(True)
+
+# Position et velocité du joueur
+posX = 16*scale/2
+posY = 9*scale/2
+speedX = 0
+speedY = 0
+
+
+projX = []
+projY = []
+projR = []
+projT = []
+pTimer= 0
+
+foeX = []
+foeY = []
+foeT = []
+foeSpeed = 20
+
+rd = pi/180
+
+title = True
+
+#Stats
+speed = 25
+accel = 50
+pSpeed = 1
+pTick = 10
+hp = 6
+tearRange = 72
+inv = False
+invTimer = 0
+
+wave = 1
+ennemis = 3
+
+
+
+pyxel.load("PYXEL_RESOURCE_FILE.pyxres")
+
+pyxel.playm(0,loop=True)
+
+def move(x, y):
+    global speedX,speedY,speed
+
+    if pyxel.btn(pyxel.KEY_D):
+        speedX += speed/accel
+        if speedX > 2:
+            speedX = 2
+        if speedX < 0:
+             speedX = -speedX
+    elif pyxel.btn(pyxel.KEY_A):
+        speedX -= speed/accel
+        if speedX > 0:
+             speedX = -speedX
+        if speedX < -2:
+            speedX = -2
+    else:
+        if speedX > 0:
+              speedX -= speed/60
+        elif speedX < 0:
+              speedX += speed/accel
+        if abs(speedX) < 2*speed/accel:
+             speedX = 0
+
+    if pyxel.btn(pyxel.KEY_S):
+        speedY += speed/accel
+        if speedY < 0:
+             speedY = -speedY
+        if speedY > 2:
+            speedY = 2
+    elif pyxel.btn(pyxel.KEY_W):
+        speedY -= speed/accel
+        if speedY > 0:
+             speedY = -speedY
+        if speedY < -2:
+            speedY = -2
+    else:
+        if speedY > 0:
+              speedY -= speed/60
+        elif speedY < 0:
+              speedY += speed/accel
+        if abs(speedY) < 2*speed/accel:
+             speedY = 0
+    
+    magnitude = (float(abs(speedX)>0) + float(abs(speedY)>0))**0.5
+    magnitude += float(magnitude==0)
+    if (x < 120) or (x > 0):
+            x = x + speedX / magnitude
+    if (y < 120) or (y > 0):
+            y = y + speedY / magnitude
+
+    return x, y
+
+def projUpdate():
+    #Ignorer si 0 projectiles
+    if projX == []:
+        return
+    
+    #Déplacement projectiles
+    delIndex = []
+    for i in range(len(projX)):
+        if i >= len(projX):
+             return
+        if abs(projR[i]) == 1:
+            projX[i] += projR[i]*pSpeed
+        if abs(projR[i]) == 2:
+            projY[i] += (projR[i]/2)*pSpeed
+        projT[i] += 1
+        if projT[i] > tearRange or (abs(projY[0]) >= 9*scale or abs(projX[0]) >= 16*scale):
+            delIndex.append(i)
+    for i in delIndex:
+        projX.pop(delIndex[i]-i)
+        projY.pop(delIndex[i]-i)
+        projR.pop(delIndex[i]-i)
+        projT.pop(delIndex[i]-i)
+
+def foeUpdate():
+    #Ignorer si 0 ennemis
+    if foeX == []:
+        return
+
+    #Déplacement vers le joueur
+    for i in range(len(foeX)):
+            if dist((foeX[i],foeY[i]),(posX,posY)) > 3:
+                invDist = 1/dist((foeX[i],foeY[i]),(posX,posY))
+                foeX[i] += (posX-foeX[i])*0.1*foeSpeed*invDist +(randint(-1,1)*foeT[i]==1)
+                foeY[i] += (posY-foeY[i])*0.1*foeSpeed*invDist +(randint(-1,1)*foeT[i]==1)
+
+def collision():
+    global hp,inv
+    #Projectiles/Ennemis
+    delIndex = []
+    delIndex2 = []
+    for i in range(len(foeX)):
+        for j in range(len(projX)):
+             if dist((foeX[i],foeY[i]),(projX[j],projY[j])) < 4:
+                  delIndex.append(i)
+                  delIndex2.append(j)
+    for i in delIndex:
+        foeX.pop(delIndex[i]-i)
+        foeY.pop(delIndex[i]-i)
+        foeT.pop(delIndex[i]-i)
+    for i in delIndex2:
+        projX.pop(delIndex2[i]-i)
+        projY.pop(delIndex2[i]-i)
+        projR.pop(delIndex2[i]-i)
+        projT.pop(delIndex2[i]-i)
+                
+    #Joueur/Ennemis:
+    if inv:
+        return
+    for i in range(len(foeX)):
+        if dist((foeX[i],foeY[i]),(posX,posY)) < 4:
+            pyxel.play(3,11)
+            hp -= 1
+            if hp == 0:
+                pyxel.reset()
+            inv = True            
+                 
+
+def update():
+    global posX, posY, pTimer, pTick,title,inv,invTimer
+
+    #Timer des projectiles
+    pTimer+= 1
+    if pTimer> pTick:
+        pTimer= 0
+
+    if inv:
+        invTimer+= 1
+        if invTimer > 60:
+            invTimer= 0
+            inv = False
+
+    if title:
+        if pyxel.btn(pyxel.KEY_SPACE):
+             title = False
+             pyxel.playm(1,loop=True)
+        return
+
+    #Màj projectiles/ennemi
+    projUpdate()
+    foeUpdate()
+    collision()
+
+    #Déplacement
+    posX, posY = move(posX, posY)
+
+    #Lancer projectiles
+    if  pTimer== 0:
+        if pyxel.btn(pyxel.KEY_LEFT):
+            projX.append((posX-2))
+            projY.append(posY-2)
+            projR.append(-1)
+            projT.append(0)
+            pyxel.play(2,10)
+        elif pyxel.btn(pyxel.KEY_RIGHT):
+            projX.append((posX-2))
+            projY.append(posY-2)
+            projR.append(1)
+            projT.append(0)
+            pyxel.play(2,10)
+        elif pyxel.btn(pyxel.KEY_UP):
+            projX.append((posX-2))
+            projY.append(posY-2)
+            projR.append(-2)
+            projT.append(0)
+            pyxel.play(2,10)
+        elif pyxel.btn(pyxel.KEY_DOWN):
+            projX.append((posX-2))
+            projY.append(posY-2)
+            projR.append(2)
+            projT.append(0)
+            pyxel.play(2,10)
+        
+
+    #Apparition ennemis:
+    if randint(0,64) == 0:
+        if randint(0,1) == 0:
+            foeX.append(16*scale-(16*scale*randint(0,1)))
+            foeY.append(randint(0,9*scale))
+        else:
+            foeX.append(randint(0,16*scale))
+            foeY.append(9*scale-(9*scale*randint(0,1)))
+        foeT.append(randint(0,1))
+
+
+def draw():
+    #Écran titre
+    if title:
+        pyxel.cls(7)
+        pyxel.blt((16*scale/2)-128,(9*scale/2)-72,0,0,32,256,48,0)
+        pyxel.blt((16*scale/2)-48,(9*scale/2)-16,0,0+(96*int(pTimer<=5)),80,96,96,0)
+        return
+        
+
+    #Fond marron
+    pyxel.cls(9)
+    pyxel.blt((16*scale/2)-64,(9*scale/2)-48,0,0,176,128,96,0)
+
+    #Joueur 16x16
+    if invTimer % 2 == 0:
+        pyxel.blt(posX-8,posY-8,0,0,0,16,16,9)
+    #pyxel.rect(16*scale/2,9*scale/2,1,1,8)
+
+    #Projectile
+    for i in range(len(projX)):
+        #pyxel.rect(projX[i], projY[i], 4, 4, 6)
+        pyxel.blt(projX[i], projY[i],0,70,6,4,4,9)
+    for i in range(len(foeX)):
+        pyxel.blt(foeX[i]-8,foeY[i]-8,0,16*foeT[i],16,16,16,9)
+
+    #HUD
+    tempHp = hp
+    for i in range(3):
+        if tempHp >= 2:
+            pyxel.blt((16*scale/2)-144+(i*20),(9*scale/2)-80,0,16,0,16,16,9)
+        elif tempHp > 0:
+            pyxel.blt((16*scale/2)-144+(i*20),(9*scale/2)-80,0,32,0,16,16,9)
+        elif tempHp <= 0:
+            pyxel.blt((16*scale/2)-144+(i*20),(9*scale/2)-80,0,48,0,16,16,9)
+        tempHp -= 2
+        
+    
+
+pyxel.run(update, draw)
